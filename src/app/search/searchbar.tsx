@@ -2,7 +2,11 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
-const SearchBar = ({ input, setInput }) => {
+interface SearchBarProps {
+    input: string;
+    setInput: React.Dispatch<React.SetStateAction<string>>;
+}
+const SearchBar: React.FC<SearchBarProps> = ({ input, setInput }) => {
     const [inputValue, setInputValue] = useState("");
     const [sugestionValue, setSuggestionsValue] = useState([]);
     const [showSugestionBox, setShowSuggestionsBox] = useState("");
@@ -18,8 +22,8 @@ const SearchBar = ({ input, setInput }) => {
     }
 
     const handleChangeInput = async (value: string) => {
-        console.log("jhsbdfbskd")
-        const searchValue = value.target.value;
+        // console.log("jhsbdfbskd")
+        const searchValue = value.target?.value ;
         setInputValue(value.target.value);
         if (value.target.value.length > 0) {
             try {
