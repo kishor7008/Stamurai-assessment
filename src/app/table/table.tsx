@@ -1,5 +1,5 @@
-"use client"
-import { useEffect, useState } from "react";
+"use client";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import {
   ChevronUpIcon,
@@ -8,13 +8,21 @@ import {
 import {
   Card,
   CardHeader,
-  Typography,
   CardBody,
-
-} from "@material-tailwind/react";
+} from '@material-tailwind/react';
 import InfiniteScroll from 'react-infinite-scroll-component';
-
 import Link from "next/link";
+import Nav from "../navbar/nav";
+import Spiner from "./spiner";
+import Typography from "../utils/Typography";
+
+// Define interface for city data fields
+interface CityFields {
+  city_name: string;
+  population: number;
+  // Define other fields if needed
+}
+
 // Define interface for city data
 interface CityData {
   recordid: string;
@@ -24,31 +32,25 @@ interface CityData {
   population: number;
   geoname_id: string;
   country_code: string;
-  fields: {
-    city_name: string;
-    population: number;
-    // Define other fields if needed
-  }
+  fields: CityFields;
   // Add other fields if needed
 }
 
-import { useRef } from 'react';
-import Nav from "../navbar/nav";
-import Spiner from "./spiner";
-const Table = () => {
-  const headingRefs = useRef({});
+const Table: React.FC = () => {
+  const headingRefs = useRef<{ [key: string]: HTMLElement | null }>({});
   const [cityData, setCityData] = useState<CityData[]>([]);
   const [colorUpArraw, setColorUpArraw] = useState(false);
   const [colorDownArrow, setColorDownArrow] = useState(false);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
-  function capitalizeFirstLetter(text: string) {
-    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-  }
-
   const [offset, setOffset] = useState(0);
-  var url = "";
+
+  const capitalizeFirstLetter = (text: string) => {
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   const getData = () => {
+    let url = "";
     if (input.length) {
       url = `https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/records?limit=10&offset=${(1 - 1) * 10}&refine=cou_name_en:${capitalizeFirstLetter(input)}`;
     } else {
@@ -57,14 +59,13 @@ const Table = () => {
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        console.log("data", data)
-        setCityData(data.results)
-        // setCityData(pre => [...pre, ...data.results])
-        // setOffset(prevOffset => prevOffset + 10); // Update offset here
+        console.log("data", data);
+        setCityData(data.results);
         setLoading(false);
       })
-      .catch((err) => console.log("error", err))
-  }
+      .catch((err) => console.log("error", err));
+  };
+
   useEffect(() => {
     getData();
     const interval = setInterval(() => {
@@ -74,11 +75,8 @@ const Table = () => {
     return () => clearInterval(interval);
   }, [input]);
 
-  // console.log("cityData", cityData)
-
-  // sort funtion ......
   const handleAscendingOrder = (head: string) => {
-    let sortData; // Define sortData variable
+    let sortData: CityData[] = [];
     if (head === "Country Code") {
       sortData = [...cityData].sort((a, b) => a.country_code.localeCompare(b.country_code));
     }
@@ -94,16 +92,13 @@ const Table = () => {
     if (head === "Poulation") {
       sortData = [...cityData].sort((a, b) => b.population - a.population);
     }
-    // console.log("sortData", sortData);
-    // headingRefs.current[head].style.color = "black";
     setCityData(sortData);
     setColorUpArraw(true);
     setColorDownArrow(false);
   };
 
   const handleDescendingOrder = (head: string) => {
-    // console.log("head", head);
-    let sortData; // Define sortData variable
+    let sortData: CityData[] = [];
     if (head === "Country Code") {
       sortData = [...cityData].sort((a, b) => b.country_code.localeCompare(a.country_code));
     }
@@ -119,21 +114,24 @@ const Table = () => {
     if (head === "Poulation") {
       sortData = [...cityData].sort((a, b) => a.population - b.population);
     }
-    // console.log("sortData", sortData);
-    // headingRefs.current[head].style.color = "black";
     setCityData(sortData);
     setColorUpArraw(false);
     setColorDownArrow(true);
   };
 
-
-  // console.log("offset", offset)
   const TABLE_HEAD = ["Country Code", "Cuntries", "City Name", "TimeZone", "Poulation"];
   return (
     <>
       <Nav setInput={setInput} input={input} />
-      <Card className="h-full w-full">
-        <CardHeader>
+      <Card  className="h-full w-full"
+  title="Card Title" // Example of a required prop
+  color={"default"} />
+
+        <CardHeader
+         title="My Card Title" 
+         placeholder="Placeholder Text"
+         onPointerEnterCapture={() => console.log('Pointer entered')}
+         onPointerLeaveCapture={() => console.log('Pointer left')}>
           <div className="overflow-x-auto">
             <table className="w-full table-auto text-left">
               <thead>
@@ -155,15 +153,8 @@ const Table = () => {
                               <ChevronUpIcon className={`h-3 w-4  text-white hover:text-black`} onClick={() => handleAscendingOrder(head)} />
                               <ChevronDownIcon className={`h-3 w-4 text-white hover:text-black`} onClick={() => handleDescendingOrder(head)} />
                             </span>
-                            {/* <span>
-                            <ChevronUpIcon ref={(el) => headingRefs.current[head] = el}
-                              className={"h-3 w-4 text-white"} onClick={() => handleAscendingOrder(head)} />
-                            <ChevronDownIcon ref={(el) => headingRefs.current[head] = el} className={"h-3 w-4 text-white"} onClick={() => handleDescendingOrder(head)}
-                            />
-                          </span> */}
                           </>
                         )}
-
                       </Typography>
                     </th>
                   ))}
@@ -172,16 +163,19 @@ const Table = () => {
             </table>
           </div>
         </CardHeader>
-        <CardBody className="overflow-y-auto max-h-[600px]">
+        <CardBody
+         placeholder="Your placeholder text"
+         onPointerEnterCapture={() => console.log('Pointer entered')}
+         onPointerLeaveCapture={() => console.log('Pointer left')}
+         className="overflow-y-auto max-h-[600px]">
           <InfiniteScroll
             dataLength={cityData.length}
             next={getData}
-            pageStart={0}
-            loadMore={(page) => {
+            // pageStart={0}
+            loadMore={(_:any) => {
               setLoading(true);
             }}
             hasMore={loading}
-            // loader={<Spiner />}
           >
             {!loading ?
               <table className="w-full table-auto text-left">
@@ -196,8 +190,8 @@ const Table = () => {
                               ? "p-4"
                               : "p-4 border-b border-blue-gray-50 text-left";
                             return (
-                              <tr key={name} className="hover:bg-gray-300" >
-                                <td className={`${classes} w-80`} color="blue-gray" >
+                              <tr key={name} className="hover:bg-gray-300">
+                                <td className={`${classes} w-80`} color="blue-gray">
                                   <Typography
                                     variant="small"
                                     color="blue-gray"
@@ -206,7 +200,7 @@ const Table = () => {
                                     {country_code}
                                   </Typography>
                                 </td>
-                                <td className={classes} >
+                                <td className={classes}>
                                   <Typography
                                     variant="small"
                                     color="blue-gray"
@@ -253,7 +247,7 @@ const Table = () => {
                   }
                 </tbody>
               </table>
-              : <td className="px-6 py-4 col-span-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" colSpan="5" >
+              : <td className="px-6 py-4 col-span-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" colSpan={5}>
                 <div className="flex justify-center">
                   <Spiner />
                 </div>
@@ -266,4 +260,3 @@ const Table = () => {
 };
 
 export default Table;
-

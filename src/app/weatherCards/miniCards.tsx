@@ -2,8 +2,9 @@
 
 import { BiDownArrowAlt, BiUpArrowAlt } from "react-icons/bi";;
 import { useEffect, useState } from "react";
+import Image from "next/image";
 interface MiniCardsData {
-    time: number;
+    time: string;
     description: string;
     temp: number;
     icon: string;
@@ -80,7 +81,7 @@ const MiniCards = ({
                 <div className="border border-white p-4 text-white">
                     <h2 className="text-lg font-semibold mb-4">{new Date(time).toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" })}</h2>
                     <div className="flex flex-col lg:flex-row items-center">
-                        <img src={anyIcon} alt="forecast not available" className="w-24 h-24 lg:w-32 lg:h-32 mb-4 lg:mb-0" />
+                        <Image src={anyIcon} alt="forecast not available" className="w-24 h-24 lg:w-32 lg:h-32 mb-4 lg:mb-0" />
                         <div className="ml-0 lg:ml-4">
                             <p className="font-bold text-center  text-3xl ">{(temp - 273.15).toFixed(2)}&deg;C</p>
                             <p className="mb-1 text-center">{description}</p>
