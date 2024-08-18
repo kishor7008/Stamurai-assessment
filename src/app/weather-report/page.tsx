@@ -1,7 +1,7 @@
 "use client"
 
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import WeatherCard from '../weatherCards/weatherCard';
 import MiniCards from '../weatherCards/miniCards';
 
@@ -31,7 +31,7 @@ interface WeatherData {
         sunrise: string;
         sunset: string;
     };
-    name: string;
+    name: string; 
     dt_txt: string;
     weather: Weather[];
 }
@@ -67,42 +67,49 @@ const Page: React.FC = () => {
     let lon: number | undefined;
     let lat: number | undefined;
 
-    const getWetherData = () => {
-        fetch(
+    const weatherData = useCallback(async (lon: number, lat: number) => {
+        try {
+          const res = await fetch(
+            `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${key}&units=metric`
+          );
+          if (!res.ok) throw new Error('Failed to fetch forecast data');
+          const data: ForecastResponse = await res.json();
+          setFiveDayaData(data);
+        } catch (error: any) {
+          console.log("Error fetching forecast data:", error.message);
+        }
+      }, [key]);
+    
+      const getWetherData = useCallback(async () => {
+        try {
+          const res = await fetch(
             `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}&units=metric`
-        ).then((res) => res.json())
-            .then((data: WeatherData) => {
-                setToDay(data);
-                lon = data.coord.lon;
-                lat = data.coord.lat;
-                setBg(data.weather);
-                weatherData(lon, lat);
-            })
-            .catch((error) => console.log("error", error));
-    }
-
-    const weatherData = (lon: number, lat: number) => {
-        fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${key}`)
-            .then((res) => res.json())
-            .then((data: ForecastResponse) => {
-                setFiveDayaData(data);
-            })
-            .catch((error) => console.log("error", error));
-    }
-
-    const filterForcastByfirstObjTime = (fiveDaydata: ForecastData[] | undefined) => {
+          );
+          if (!res.ok) throw new Error('Failed to fetch weather data');
+          const data: WeatherData = await res.json();
+          setToDay(data);
+          const lon = data.coord.lon;
+          const lat = data.coord.lat;
+          setBg(data.weather);
+          await weatherData(lon, lat);
+        } catch (error: any) {
+          console.log("Error fetching weather data:", error.message);
+        }
+      }, [city, key, weatherData]);
+    
+      const filterForcastByfirstObjTime = (fiveDaydata: ForecastData[] | undefined) => {
         if (!fiveDaydata) {
-            return [];
+          return [];
         }
         const firstObjTime = fiveDaydata[0]?.dt_txt.split(" ")[1];
         return fiveDaydata.filter((data) => data.dt_txt.endsWith(firstObjTime));
-    }
-
-    const filteredForcast = filterForcastByfirstObjTime(fiveDaydata?.list);
-
-    useEffect(() => {
+      };
+    
+      const filteredForcast = filterForcastByfirstObjTime(fiveDaydata?.list);
+    
+      useEffect(() => {
         getWetherData();
-    }, []);
+      }, [getWetherData]);
 
     const mapUrl = `https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
 

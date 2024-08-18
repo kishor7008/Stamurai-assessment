@@ -2,39 +2,46 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
+
 interface SearchBarProps {
     input: string;
     setInput: React.Dispatch<React.SetStateAction<string>>;
 }
-const SearchBar: React.FC<SearchBarProps> = ({ input, setInput }) => {
-    const [inputValue, setInputValue] = useState("");
-    const [sugestionValue, setSuggestionsValue] = useState([]);
-    const [showSugestionBox, setShowSuggestionsBox] = useState("");
 
-    const handleOnSubmit = (e: any) => {
-        e.preventDefault()
-        setInput(inputValue)
-        console.log("submit")
+interface Suggestion {
+    cou_name_en: string;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ input, setInput }) => {
+    const [inputValue, setInputValue] = useState<string>("");
+    const [suggestionValue, setSuggestionsValue] = useState<string[]>([]);
+    const [showSuggestionBox, setShowSuggestionsBox] = useState<boolean>(false);
+
+    const handleOnSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setInput(inputValue);
+        console.log("submit");
     }
 
-    function capitalizeFirstLetter(text: string) {
+    const capitalizeFirstLetter = (text: string): string => {
         return text.charAt(0).toUpperCase() + text.slice(1);
     }
 
-    const handleChangeInput = async (value: string) => {
-        // console.log("jhsbdfbskd")
-        const searchValue = value.target?.value ;
-        setInputValue(value.target.value);
-        if (value.target.value.length > 0) {
+    const handleChangeInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const searchValue = e.target.value;
+        setInputValue(searchValue);
+        if (searchValue.length > 0) {
             try {
-                const response = await axios.get(`https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/records?limit=20&refine=cou_name_en%3A%22${capitalizeFirstLetter(searchValue)}%22`);
-                // console.log("response", response)
-                const suggestions = response.data.list.map((item: any) => item.cou_name_en);
-                // setSuggestionsValue(suggestions);
-                console.log("suggestion box", suggestions)
+                const response = await axios.get<{ list: Suggestion[] }>(`https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/records?limit=20&refine=cou_name_en%3A%22${capitalizeFirstLetter(searchValue)}%22`);
+                const suggestions = response.data.list.map((item) => item.cou_name_en);
+                setSuggestionsValue(suggestions);
+                setShowSuggestionsBox(true);
+                console.log("suggestion box", suggestions);
             } catch (err) {
                 console.log("err", err);
             }
+        } else {
+            setShowSuggestionsBox(false);
         }
     }
 
@@ -46,7 +53,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ input, setInput }) => {
                     className="w-full p-3 rounded-full bg-slate-800 text-white"
                     placeholder="Type to search.."
                     value={inputValue}
-                    onChange={(e) => handleChangeInput(e)}
+                    onChange={handleChangeInput}
                 />
                 <button className="absolute right-1 top-1/2 transform -translate-y-1/2 p-3 bg-slate-900 rounded-full" type="submit">
                     <CiSearch style={{ color: 'white', fontSize: '20px' }} />
@@ -58,8 +65,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ input, setInput }) => {
                 </div> */}
             </div>
         </form>
-
     )
 }
 
-export default SearchBar; 
+export default SearchBar;
